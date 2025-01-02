@@ -1,4 +1,4 @@
-import React,{ useState } from "react";
+import React, { useState } from 'react';
 
 type Todo = {
   title: string;
@@ -7,10 +7,19 @@ type Todo = {
   delete_flg: boolean;
 };
 
-const Todos: React.FC = () => {
+type Filter = 'all' | 'completed' | 'unchecked' | 'delete';
+ 
+const Todo: React.FC = () => {
   const [todos, setTodos] = useState<Todo[]>([]);
   const [text, setText] = useState<string>('');
   const [nextId, setNextId] = useState<number>(1);
+  const [filter, setFilter] = useState<Filter>('all');
+
+  const isFormDisabled = filter === 'completed' || filter === 'delete';
+
+  const handleFilterChange = (filter: Filter) => {
+    setFilter(filter);
+  };
 
   const handleSubmit = () => {
     // 入力チェック
@@ -67,45 +76,78 @@ const Todos: React.FC = () => {
     });
   };
 
+  const handleEmpty = () => {
+    setTodos((todos) => todos.filter((todo) => !todo.delete_flg));
+  }
+
+  const getFilteredTodos = () => {
+    switch(filter){
+      case 'completed':
+        return todos.filter((todo) => todo.completed_flg && !todo.delete_flg);
+      case 'unchecked':
+        return todos.filter((todo) => !todo.completed_flg && !todo.delete_flg);
+      case 'delete':
+        return todos.filter((todo) => todo.delete_flg);
+      default:
+        return todos.filter((todo) => !todo.delete_flg);
+    }
+  };
+
   return (
-    <div>
-      <form onSubmit={(e) => {
-          e.preventDefault();
-          handleSubmit();
-        }}
+    <div className="todo-container">
+      <select
+       defaultValue="all"
+       onChange={(e) => handleFilterChange(e.target.value as Filter)}
       >
-        <input 
-          type="text"
-          value={text}
-          onChange={(e) => setText(e.target.value)}
-          placeholder="タスクを入力してください"
-        />
-        <button className="insert-btn" type="submit">追加</button>
-      </form>
+        <option value="all">全てのタスク</option>
+        <option value="completed">完了したタスク</option>
+        <option value="unchecked">現在のタスク</option>
+        <option value="delete">ごみ箱</option>
+      </select>
+      {filter === 'delete' ? (
+        <button onClick={handleEmpty}>
+          ごみ箱を空にする
+        </button>
+      ):(
+        filter !== 'completed' && (
+          <form onSubmit={(e) => {
+              e.preventDefault();
+              handleSubmit();
+            }}
+          >
+            <input 
+              type="text"
+              value={text}
+              disabled={isFormDisabled}
+              onChange={(e) => setText(e.target.value)}
+              placeholder="タスクを入力してください"
+            />
+            <button className="insert-btn" type="submit">追加</button>
+          </form>
+        )
+      )}
       <ul>
-        {todos.map((todo) => {
-          return (
-            <li key={todo.id}>
-              <input 
-                type="checkbox"
-                checked={todo.completed_flg}
-                onChange={() => handleCheck(todo.id, !todo.completed_flg)}
-              />
-              <input
-                type="text"
-                value={todo.title}
-                disabled={todo.completed_flg}
-                onChange={(e) => handleEdit(todo.id, e.target.value)}
-              />
-              <button onClick={() => handleRemove(todo.id, !todo.delete_flg)}>
-                {todo.delete_flg ? '復元' : '削除'}
-              </button>
-            </li>
-          );
-        })}
+        {getFilteredTodos().map((todo) => (
+          <li key={todo.id}>
+            <input
+              type="checkbox"
+              checked={todo.completed_flg}
+              onChange={() => handleCheck(todo.id, !todo.completed_flg)}
+            />
+            <input
+              type="text"
+              value={todo.title}
+              disabled={isFormDisabled}
+              onChange={(e) => handleEdit(todo.id, e.target.value)}
+            />
+            <button onClick={() => handleRemove(todo.id, !todo.delete_flg)}>
+              {todo.delete_flg ? '復元' : '削除'}
+            </button>
+          </li>
+        ))}        
       </ul>
     </div>
   );
 };
 
-export default Todos;
+export default Todo;

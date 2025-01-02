@@ -1,9 +1,9 @@
-import Todos from "./components/todos/index";
+import Todo from "./components/todos/index";
 
 function App() {
   return (
     <>
-      <Todos />
+      <Todo />
     </>
   );
 }
